@@ -77,9 +77,7 @@ def profile(request, username):
         )
     )
     post_list = query_set(filter=None, annotate=True).filter(author=profile)
-    paginator = Paginator(post_list, POSTS_ON_PAGE)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page_obj = get_paginator(request, post_list, POSTS_ON_PAGE)
     context = {'profile': profile, 'page_obj': page_obj}
     return render(request, 'blog/profile.html', context)
 
