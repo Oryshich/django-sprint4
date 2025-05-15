@@ -76,13 +76,7 @@ def profile(request, username):
             username=username
         )
     )
-    post_list = Post.objects.select_related(
-        'author',
-        'location',
-        'category'
-    ).filter(author=profile).annotate(
-        comment_count=Count('comments')
-    ).order_by('-pub_date')
+    post_list = query_set(filter=None, annotate=True).filter(author=profile)
     paginator = Paginator(post_list, POSTS_ON_PAGE)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
