@@ -1,20 +1,16 @@
 from django.contrib.auth import get_user_model, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.paginator import Paginator
-from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse
 from django.utils import timezone
 from django.views.generic import UpdateView
 
 from blog.forms import (
-    CommentForm, PostForm, EditUserProfileForm
+    CommentForm, EditUserProfileForm, PostForm
 )
-from blog.models import Category, Post, Comment
-
-
-POSTS_ON_PAGE = 10
+from blog.models import Category, Comment, Post
+from blog.service import get_paginator, query_set
 
 
 User = get_user_model()
@@ -25,34 +21,9 @@ def logout_view(request):
     return render(request, 'registration/logged_out.html')
 
 
-def query_set(filter=None, annotate=None):
-    query_set = Post.objects.select_related(
-        'category',
-        'location',
-        'author'
-    )
-    if filter:
-        query_set = query_set.filter(
-            is_published=True,
-            category__is_published=True,
-            pub_date__lte=timezone.now()
-        )
-    if annotate:
-        query_set = query_set.annotate(
-            comment_count=Count('comments')
-        ).order_by('-pub_date')
-    return query_set
-
-
-def get_paginator(request, queryset, number_of_pages=POSTS_ON_PAGE):
-    paginator = Paginator(queryset, number_of_pages)
-    page_number = request.GET.get('page')
-    return paginator.get_page(page_number)
-
-
 def index(request):
     post_list = query_set(filter=True, annotate=True)
-    page_obj = get_paginator(request, post_list, POSTS_ON_PAGE)
+    page_obj = get_paginator(request, post_list)
     context = {'page_obj': page_obj}
     return render(request, 'blog/index.html', context)
 
@@ -64,8 +35,12 @@ def category_posts(request, category_slug):
         slug=category_slug,
         is_published=True
     )
-    post_list = query_set(filter=True, annotate=True).filter(category=category)
-    page_obj = get_paginator(request, post_list, POSTS_ON_PAGE)
+    post_list = category.posts.all().filter(
+        is_published=True,
+        category__is_published=True,
+        pub_date__lte=timezone.now()
+    )
+    page_obj = get_paginator(request, post_list)
     context = {'page_obj': page_obj, 'category': category}
     return render(request, 'blog/category.html', context)
 
@@ -76,8 +51,17 @@ def profile(request, username):
             username=username
         )
     )
-    post_list = query_set(filter=None, annotate=True).filter(author=profile)
-    page_obj = get_paginator(request, post_list, POSTS_ON_PAGE)
+    if request.user != username:
+        post_list = query_set(
+            filter=False,
+            annotate=True
+        ).filter(author=profile)
+    else:
+        post_list = query_set(
+            filter=True,
+            annotate=True
+        ).filter(author=profile)
+    page_obj = get_paginator(request, post_list)
     context = {'profile': profile, 'page_obj': page_obj}
     return render(request, 'blog/profile.html', context)
 
@@ -130,8 +114,8 @@ def post_detail(request, post_id):
             query_set(filter=True, annotate=False),
             id=post_id,
         )
-    form = CommentForm(request.POST or None)
-    comments = Comment.objects.select_related('author').filter(post=post)
+    form = CommentForm()
+    comments = post.comments.all()
     context = {'post': post,
                'form': form,
                'comments': comments}
@@ -147,7 +131,7 @@ class UserProfileUpdateView(LoginRequiredMixin, UpdateView):
         return self.request.user
 
     def get_success_url(self):
-        return reverse_lazy(
+        return reverse(
             'blog:profile',
             kwargs={'username': self.request.user.username}
         )

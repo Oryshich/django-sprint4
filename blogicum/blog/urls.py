@@ -45,11 +45,19 @@ urlpatterns = [
         views.category_posts,
         name='category_posts'
     ),
-    path('profile/<str:username>/', views.profile, name='profile'),
+    path(
+        'profile/<str:username>/',
+        views.profile,
+        name='profile'
+    ),
     path(
         'edit_profile/',
         views.UserProfileUpdateView.as_view(),
         name='edit_profile'
     ),
-    path('', views.index, name='index'),
+    path(
+        '',
+        views.index,
+        name='index'
+    ),
 ]

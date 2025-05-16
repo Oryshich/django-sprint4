@@ -1,6 +1,7 @@
+from bs4 import Comment
 from django.contrib import admin
 
-from .models import Category, Location, Post
+from .models import Category, Comment, Location, Post
 
 
 @admin.register(Post)
@@ -48,3 +49,9 @@ class LocationAdmin(admin.ModelAdmin):
         'is_published',
     )
     empty_value_display = 'Не задано'
+
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ('text', 'created_at')
+    list_filter = ('author',)

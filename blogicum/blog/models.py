@@ -66,11 +66,12 @@ class Post(PublishedModel):
         on_delete=models.SET_NULL,
         null=True,
         verbose_name='Категория',
+        related_name='posts',
     )
     image = models.ImageField(
-        'Изображение',
         upload_to='posts_images',
-        blank=True
+        blank=True,
+        verbose_name='Изображение',
     )
 
     class Meta:
@@ -84,18 +85,28 @@ class Post(PublishedModel):
 
 
 class Comment(models.Model):
-    text = models.TextField('Текст комментария')
+    text = models.TextField(verbose_name='Текст комментария')
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
         related_name='comments',
         verbose_name='Комментарий',
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Создан'
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Автор'
+    )
 
     class Meta:
         ordering = ('created_at',)
 
     def __str__(self):
-        return self.text
+        return (
+            f'автор: <{self.author}>\tпост: <{self.post}>\t'
+            f'комментарий: <{self.text}>'
+        )
