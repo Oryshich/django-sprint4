@@ -3,7 +3,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils import timezone
 from django.views.generic import UpdateView
 
 from blog.forms import (
@@ -35,11 +34,7 @@ def category_posts(request, category_slug):
         slug=category_slug,
         is_published=True
     )
-    post_list = category.posts.all().filter(
-        is_published=True,
-        category__is_published=True,
-        pub_date__lte=timezone.now()
-    )
+    post_list = query_set(manager=category.posts, filter=True, annotate=False)
     page_obj = get_paginator(request, post_list)
     context = {'page_obj': page_obj, 'category': category}
     return render(request, 'blog/category.html', context)
@@ -51,16 +46,11 @@ def profile(request, username):
             username=username
         )
     )
-    if request.user != username:
-        post_list = query_set(
-            filter=False,
-            annotate=True
-        ).filter(author=profile)
-    else:
-        post_list = query_set(
-            filter=True,
-            annotate=True
-        ).filter(author=profile)
+    post_list = query_set(
+        manager=profile.posts_by_user,
+        filter=request.user == username,
+        annotate=True
+    )
     page_obj = get_paginator(request, post_list)
     context = {'profile': profile, 'page_obj': page_obj}
     return render(request, 'blog/profile.html', context)
@@ -115,7 +105,7 @@ def post_detail(request, post_id):
             id=post_id,
         )
     form = CommentForm()
-    comments = post.comments.all()
+    comments = post.comments.select_related('author')
     context = {'post': post,
                'form': form,
                'comments': comments}

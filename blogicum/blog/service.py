@@ -6,8 +6,8 @@ from blog.constants import POSTS_ON_PAGE
 from blog.models import Post
 
 
-def query_set(filter=None, annotate=None):
-    query_set = Post.objects.select_related(
+def query_set(manager=Post.objects, filter=None, annotate=None):
+    query_set = manager.select_related(
         'category',
         'location',
         'author'

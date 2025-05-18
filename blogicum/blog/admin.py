@@ -1,4 +1,3 @@
-from bs4 import Comment
 from django.contrib import admin
 
 from .models import Category, Comment, Location, Post

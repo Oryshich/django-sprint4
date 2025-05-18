@@ -53,6 +53,7 @@ class Post(PublishedModel):
         User,
         on_delete=models.CASCADE,
         verbose_name='Автор публикации',
+        related_name='posts_by_user'
     )
     location = models.ForeignKey(
         Location,
@@ -104,6 +105,8 @@ class Comment(models.Model):
 
     class Meta:
         ordering = ('created_at',)
+        verbose_name = 'комментарий'
+        verbose_name_plural = 'Комментарии'
 
     def __str__(self):
         return (
