@@ -34,7 +34,7 @@ def category_posts(request, category_slug):
         slug=category_slug,
         is_published=True
     )
-    post_list = query_set(manager=category.posts, filter=True, annotate=False)
+    post_list = query_set(manager=category.posts, filter=True, annotate=True)
     page_obj = get_paginator(request, post_list)
     context = {'page_obj': page_obj, 'category': category}
     return render(request, 'blog/category.html', context)
